@@ -1,35 +1,42 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Jumbotron, Container, CardColumns, Card, Button } from 'react-bootstrap';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import { GET_ME } from '../utils/queries';
 import { REMOVE_BOOK } from '../utils/mutations';
 import { removeBookId } from '../utils/localStorage';
 
+import Auth from '../utils/auth';
+
 const SavedBooks = () => {
   const {loading, data} = useQuery(GET_ME);
   
-  const [userData, setData] = useState(loading ? null : data.me);
+  let userData = data?.me || {};
 
-  const [removeBook, {error}] = useMutation(REMOVE_BOOK);
-
-  if(!userData) {
-    return null
-  }
+  const [removeBook] = useMutation(REMOVE_BOOK);
 
   const handleDeleteBook = async (bookId) => {
+    const token = Auth.loggedIn() ? Auth.getToken() : null;
+
+    if (!token) {
+      return false;
+    }
+
+
     try {
-      const data = await removeBook({
-        variables: {bookId},
+      const { user } = await removeBook({
+        variables: {bookId: bookId},
       });
 
-      setData(() => {
-        return {...userData, savedBooks: data.data.removeBook.savedBooks}
-      })
+      userData = user;
+      removeBookId(bookId);
     } catch (err) {
       console.error(err);
     }
-    removeBookId(bookId);
   };
+
+  if (loading) {
+    return <h2>LOADING...</h2>
+  }
 
 
   return (
@@ -41,12 +48,12 @@ const SavedBooks = () => {
       </Jumbotron>
       <Container>
         <h2>
-          {!loading && userData.savedBooks.length
+          {userData.savedBooks?.length
             ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <CardColumns>
-          {!loading && userData.savedBooks.map((book) => {
+          {userData.savedBooks?.map((book) => {
             return (
               <Card key={book.bookId} border='dark'>
                 {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}

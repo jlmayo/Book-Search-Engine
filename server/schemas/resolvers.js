@@ -21,8 +21,8 @@ const resolvers = {
                 throw new AuthenticationError("Invalid credentials");
             }
 
-            const correctPw = await user.isCorrectPassword(password);
-            if (!correctPw) {
+            const correctPassword = await user.isCorrectPassword(password);
+            if (!correctPassword) {
                 throw new AuthenticationError("Invalid credentials");
             }
             const token = signToken(user);
@@ -33,11 +33,11 @@ const resolvers = {
             const token = signToken(user);
             return { token, user };
         },
-        saveBook: async (parent, args, context) => {
+        saveBook: async (parent, { input }, context) => {
             if (context.user) {
                 const updatedUser = await User.findOneAndUpdate(
                     {_id: context.user._id},
-                    { $push: { savedBooks: args }},
+                    { $addToSet: { savedBooks: input }},
                     { new: true, runValidators: true }
                 );
                 return updatedUser;
@@ -48,7 +48,7 @@ const resolvers = {
             if (context.user) {
                 const updatedUser = await User.findOneAndUpdate(
                     { _id: context.user._id },
-                    { $pull: { savedBooks: {bookId} }},
+                    { $pull: { savedBooks: { bookId: bookId } }},
                     { new: true }
                 );
                 return updatedUser;
