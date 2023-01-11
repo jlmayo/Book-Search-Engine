@@ -20,8 +20,8 @@ const resolvers = {
             if (!user) {
                 throw new AuthenticationError("Invalid credentials");
             }
-
             const correctPassword = await user.isCorrectPassword(password);
+
             if (!correctPassword) {
                 throw new AuthenticationError("Invalid credentials");
             }
@@ -42,7 +42,7 @@ const resolvers = {
                 );
                 return updatedUser;
             }
-            throw new Error("Could not add book!");
+            throw new AuthenticationError("Please log in.");
         },
         removeBook: async (parent, { bookId }, context) => {
             if (context.user) {
@@ -53,9 +53,9 @@ const resolvers = {
                 );
                 return updatedUser;
             }
-            throw new AuthenticationError("Could not delete book!");
-        }
-    }
+            throw new AuthenticationError("Please log in.");
+        },
+    },
 };
 
 module.exports = resolvers;
